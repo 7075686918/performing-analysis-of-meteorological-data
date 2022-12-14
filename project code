@@ -1,0 +1,153 @@
+In [84]:
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+/kaggle/input/weather-dataset/weatherHistory.csv
+In [85]:
+import warnings
+warnings.filterwarnings("ignore")
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+import sklearn as sk
+In [86]:
+df=pd.read_csv('../input/weather-dataset/weatherHistory.csv')
+In [87]:
+np.random.seed(0)
+In [88]:
+# get the number of missing data points per column
+missing_values_count =df.isnull().sum()
+
+# look at the # of missing points in the first ten columns
+missing_values_count[0:10]
+Out[88]:
+Formatted Date                0
+Summary                       0
+Precip Type                 517
+Temperature (C)               0
+Apparent Temperature (C)      0
+Humidity                      0
+Wind Speed (km/h)             0
+Wind Bearing (degrees)        0
+Visibility (km)               0
+Loud Cover                    0
+dtype: int64
+In [89]:
+# how many total missing values do we have?
+total_cells = np.product(df.shape)
+total_missing = missing_values_count.sum()
+
+# percent of data that is missing
+percent_missing = (total_missing/total_cells) * 100
+print(percent_missing)
+0.04466769652922494
+In [90]:
+df.head()
+Out[90]:
+Formatted Date	Summary	Precip Type	Temperature (C)	Apparent Temperature (C)	Humidity	Wind Speed (km/h)	Wind Bearing (degrees)	Visibility (km)	Loud Cover	Pressure (millibars)	Daily Summary
+0	2006-04-01 00:00:00.000 +0200	Partly Cloudy	rain	9.472222	7.388889	0.89	14.1197	251.0	15.8263	0.0	1015.13	Partly cloudy throughout the day.
+1	2006-04-01 01:00:00.000 +0200	Partly Cloudy	rain	9.355556	7.227778	0.86	14.2646	259.0	15.8263	0.0	1015.63	Partly cloudy throughout the day.
+2	2006-04-01 02:00:00.000 +0200	Mostly Cloudy	rain	9.377778	9.377778	0.89	3.9284	204.0	14.9569	0.0	1015.94	Partly cloudy throughout the day.
+3	2006-04-01 03:00:00.000 +0200	Partly Cloudy	rain	8.288889	5.944444	0.83	14.1036	269.0	15.8263	0.0	1016.41	Partly cloudy throughout the day.
+4	2006-04-01 04:00:00.000 +0200	Mostly Cloudy	rain	8.755556	6.977778	0.83	11.0446	259.0	15.8263	0.0	1016.51	Partly cloudy throughout the day.
+In [91]:
+df.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 96453 entries, 0 to 96452
+Data columns (total 12 columns):
+ #   Column                    Non-Null Count  Dtype  
+---  ------                    --------------  -----  
+ 0   Formatted Date            96453 non-null  object 
+ 1   Summary                   96453 non-null  object 
+ 2   Precip Type               95936 non-null  object 
+ 3   Temperature (C)           96453 non-null  float64
+ 4   Apparent Temperature (C)  96453 non-null  float64
+ 5   Humidity                  96453 non-null  float64
+ 6   Wind Speed (km/h)         96453 non-null  float64
+ 7   Wind Bearing (degrees)    96453 non-null  float64
+ 8   Visibility (km)           96453 non-null  float64
+ 9   Loud Cover                96453 non-null  float64
+ 10  Pressure (millibars)      96453 non-null  float64
+ 11  Daily Summary             96453 non-null  object 
+dtypes: float64(8), object(4)
+memory usage: 8.8+ MB
+In [92]:
+titles_req=['Formatted Date','Apparent Temperature (C)','Humidity','Summary']
+df_1=df[titles_req]
+In [93]:
+df_1.rename({'Apparent Temperature (C)': 'Apparent Temperature'}, axis=1, inplace=True)
+In [94]:
+df_1['Formatted Date']=pd.to_datetime(df_1['Formatted Date'],utc=True)
+df_2= df_1.set_index('Formatted Date')
+df_2.resample('M').mean()
+Out[94]:
+Apparent Temperature	Humidity
+Formatted Date		
+2005-12-31 00:00:00+00:00	-4.050000	0.890000
+2006-01-31 00:00:00+00:00	-4.173708	0.834610
+2006-02-28 00:00:00+00:00	-2.990716	0.843467
+2006-03-31 00:00:00+00:00	1.969780	0.778737
+2006-04-30 00:00:00+00:00	12.098827	0.728625
+...	...	...
+2016-08-31 00:00:00+00:00	21.383094	0.674046
+2016-09-30 00:00:00+00:00	18.355833	0.688833
+2016-10-31 00:00:00+00:00	8.923947	0.799906
+2016-11-30 00:00:00+00:00	3.048627	0.848472
+2016-12-31 00:00:00+00:00	-2.017272	0.887981
+133 rows × 2 columns
+
+In [95]:
+sns.pairplot(df_2,kind='scatter')
+plt.show()
+
+In [96]:
+plt.figure(figsize=(20,20))
+sns.pairplot(df_2, hue="Summary") 
+plt.show()
+<Figure size 1440x1440 with 0 Axes>
+
+In [97]:
+plt.figure(figsize=(16,6))
+sns.relplot( x ='Apparent Temperature',y='Humidity',color='purple',hue="Summary" , data=df_2)
+Out[97]:
+<seaborn.axisgrid.FacetGrid at 0x7f6541c65ed0>
+<Figure size 1152x432 with 0 Axes>
+
+In [98]:
+# Set the width and height of the figure
+plt.figure(figsize=(16,6))
+
+# Line chart showing  
+sns.lineplot(x ='Apparent Temperature',y='Humidity', data=df_2)
+Out[98]:
+<matplotlib.axes._subplots.AxesSubplot at 0x7f65408a1850>
+
+In [99]:
+df_may=df_2[df_2.index.month==5]
+df_may.head()
+Out[99]:
+Apparent Temperature	Humidity	Summary
+Formatted Date			
+2006-05-31 22:00:00+00:00	6.133333	0.86	Partly Cloudy
+2006-05-31 23:00:00+00:00	7.294444	0.86	Partly Cloudy
+2006-05-01 00:00:00+00:00	11.133333	0.91	Overcast
+2006-05-01 01:00:00+00:00	11.600000	0.62	Mostly Cloudy
+2006-05-01 02:00:00+00:00	11.088889	0.71	Mostly Cloudy
+In [100]:
+sns.pairplot(df_may,kind='scatter')
+plt.show()
+
+In [101]:
+plt.figure(figsize=(16,6))
+
+sns.relplot( x ='Apparent Temperature',y='Humidity',color='purple',hue="Summary" , data=df_may )
+Out[101]:
+<seaborn.axisgrid.FacetGrid at 0x7f6541a84fd0>
+<Figure size 1152x432 with 0 Axes>
+
+In [102]:
+#Conclusion :
+#Global warming is no doubt deteriorating the climate and is affecting various parameters of the environment. Hence from this analysis, we infer that there is either a sharp rise in temperatures or sharp falls over the 10 yrs. Hence we can conclude that Global Warming has caused a major difference and unreliability in temperature predictability also taking humidity into consideration we can say that it has almost remained the same throughout the past years.
